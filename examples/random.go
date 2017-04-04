@@ -2,7 +2,7 @@ package main
 
 import (
 	"math/rand"
-	"../gtp"
+	gtp ".."
 )
 
 func main() {
