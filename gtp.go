@@ -28,6 +28,20 @@ type Board struct {
 	NextPlayer int
 }
 
+var known_commands = map[string]bool{
+	"protocol_version": true,
+	"name": true,
+	"version": true,
+	"known_command": true,
+	"list_commands": true,
+	"quit": true,
+	"boardsize": true,
+	"clear_board": true,
+	"komi": true,
+	"play": true,
+	"genmove": true,
+}
+
 func NewBoard(size int, komi float64) *Board {
 	var board Board
 
@@ -426,21 +440,44 @@ func StartGTP(genmove func(colour int, board *Board) string, name string, versio
 		// --------------------------------------------------------------------------------------------------
 
 		if tokens[0] == "name" {
-			one_line_success(id, name)
+			print_success(id, name)
 			continue
 		}
 
 		// --------------------------------------------------------------------------------------------------
 
 		if tokens[0] == "version" {
-			one_line_success(id, version)
+			print_success(id, version)
 			continue
 		}
 
 		// --------------------------------------------------------------------------------------------------
 
 		if tokens[0] == "protocol_version" {
-			one_line_success(id, "2")
+			print_success(id, "2")
+			continue
+		}
+
+		// --------------------------------------------------------------------------------------------------
+
+		if tokens[0] == "list_commands" {
+			response := ""
+			for k, _ := range(known_commands) {
+				response += k + "\n"
+			}
+			print_success(id, response)
+			continue
+		}
+
+		// --------------------------------------------------------------------------------------------------
+
+		if tokens[0] == "known_command" {
+			if len(tokens) < 2 {
+				print_failure(id, "no argument received for known_command")
+				continue
+			}
+			response := fmt.Sprintf("%v", known_commands[tokens[1]])
+			print_success(id, response)
 			continue
 		}
 
@@ -448,16 +485,16 @@ func StartGTP(genmove func(colour int, board *Board) string, name string, versio
 
 		if tokens[0] == "komi" {
 			if len(tokens) < 2 {
-				one_line_failure(id, "no argument received for komi")
+				print_failure(id, "no argument received for komi")
 				continue
 			}
 			komi, err := strconv.ParseFloat(tokens[1], 64)
 			if err != nil {
-				one_line_failure(id, "couldn't parse komi float")
+				print_failure(id, "couldn't parse komi float")
 				continue
 			}
 			board.Komi = komi
-			one_line_success(id, "")
+			print_success(id, "")
 			continue
 		}
 
@@ -465,21 +502,21 @@ func StartGTP(genmove func(colour int, board *Board) string, name string, versio
 
 		if tokens[0] == "clear_board" {
 			board.Clear()
-			one_line_success(id, "")
+			print_success(id, "")
 			continue
 		}
 
 		// --------------------------------------------------------------------------------------------------
 
 		if tokens[0] == "quit" {
-			one_line_success(id, "")
+			print_success(id, "")
 			os.Exit(0)
 		}
 
 		// --------------------------------------------------------------------------------------------------
 
 		if tokens[0] == "showboard" {
-			one_line_success(id, "")
+			print_success(id, "")
 			board.Dump()
 			continue
 		}
@@ -488,20 +525,20 @@ func StartGTP(genmove func(colour int, board *Board) string, name string, versio
 
 		if tokens[0] == "boardsize" {
 			if len(tokens) < 2 {
-				one_line_failure(id, "no argument received for boardsize")
+				print_failure(id, "no argument received for boardsize")
 				continue
 			}
 			size, err := strconv.Atoi(tokens[1])
 			if err != nil {
-				one_line_failure(id, "couldn't parse boardsize int")
+				print_failure(id, "couldn't parse boardsize int")
 				continue
 			}
 			if size < 7 || size > 19 {
-				one_line_failure(id, "boardsize not in range 7 - 19")
+				print_failure(id, "boardsize not in range 7 - 19")
 				continue
 			}
 			board = NewBoard(size, board.Komi)
-			one_line_success(id, "")
+			print_success(id, "")
 			continue
 		}
 
@@ -510,16 +547,16 @@ func StartGTP(genmove func(colour int, board *Board) string, name string, versio
 		if tokens[0] == "play" {
 
 			if len(tokens) < 3 {
-				one_line_failure(id, "insufficient arguments received for play")
+				print_failure(id, "insufficient arguments received for play")
 				continue
 			}
 			if tokens[1] != "black" && tokens[1] != "b" && tokens[1] != "white" && tokens[1] != "w" {
-				one_line_failure(id, "did not understand colour for play")
+				print_failure(id, "did not understand colour for play")
 				continue
 			}
 			x, y, err := board.XYFromString(tokens[2])
 			if err != nil {
-				one_line_failure(id, err.Error())
+				print_failure(id, err.Error())
 				continue
 			}
 
@@ -532,18 +569,18 @@ func StartGTP(genmove func(colour int, board *Board) string, name string, versio
 
 			if tokens[2] == "pass" {
 				board.Pass(colour)
-				one_line_success(id, "")
+				print_success(id, "")
 				continue
 			}
 
 			err = board.PlayMove(colour, x, y)
 
 			if err != nil {
-				one_line_failure(id, err.Error())
+				print_failure(id, err.Error())
 				continue
 			}
 
-			one_line_success(id, "")
+			print_success(id, "")
 			continue
 		}
 
@@ -551,11 +588,11 @@ func StartGTP(genmove func(colour int, board *Board) string, name string, versio
 
 		if tokens[0] == "genmove" {
 			if len(tokens) < 2 {
-				one_line_failure(id, "no argument received for genmove")
+				print_failure(id, "no argument received for genmove")
 				continue
 			}
 			if tokens[1] != "black" && tokens[1] != "b" && tokens[1] != "white" && tokens[1] != "w" {
-				one_line_failure(id, "did not understand colour for play")
+				print_failure(id, "did not understand colour for play")
 				continue
 			}
 
@@ -573,29 +610,30 @@ func StartGTP(genmove func(colour int, board *Board) string, name string, versio
 			} else {
 				x, y, err := board.XYFromString(s)
 				if err != nil {
-					one_line_failure(id, fmt.Sprintf("illegal move from engine: %s (%v)", s, err))
+					print_failure(id, fmt.Sprintf("illegal move from engine: %s (%v)", s, err))
 					continue
 				}
 				err = board.PlayMove(colour, x, y)
 				if err != nil {
-					one_line_failure(id, fmt.Sprintf("illegal move from engine: %s (%v)", s, err))
+					print_failure(id, fmt.Sprintf("illegal move from engine: %s (%v)", s, err))
 					continue
 				}
 			}
 
-			one_line_success(id, s)
+			print_success(id, s)
 			continue
 		}
 
 		// --------------------------------------------------------------------------------------------------
 
-		one_line_failure(id, "unknown command")
+		print_failure(id, "unknown command")
 	}
 
 	return
 }
 
-func one_line_reply(id int, s string, shebang string) {
+func print_reply(id int, s string, shebang string) {
+	s = strings.TrimSpace(s)
 	fmt.Printf(shebang)
 	if id != -1 {
 		fmt.Printf("%d", id)
@@ -607,10 +645,10 @@ func one_line_reply(id int, s string, shebang string) {
 	}
 }
 
-func one_line_success(id int, s string) {
-	one_line_reply(id, s, "=")
+func print_success(id int, s string) {
+	print_reply(id, s, "=")
 }
 
-func one_line_failure(id int, s string) {
-	one_line_reply(id, s, "?")
+func print_failure(id int, s string) {
+	print_reply(id, s, "?")
 }
