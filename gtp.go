@@ -533,8 +533,8 @@ func StartGTP(genmove func(colour int, board *Board) string, name string, versio
 				print_failure(id, "couldn't parse boardsize int")
 				continue
 			}
-			if size < 7 || size > 19 {
-				print_failure(id, "boardsize not in range 7 - 19")
+			if size < 3 || size > 26 {
+				print_failure(id, "boardsize not in range 3 - 26")
 				continue
 			}
 			board = NewBoard(size, board.Komi)
@@ -550,13 +550,9 @@ func StartGTP(genmove func(colour int, board *Board) string, name string, versio
 				print_failure(id, "insufficient arguments received for play")
 				continue
 			}
+
 			if tokens[1] != "black" && tokens[1] != "b" && tokens[1] != "white" && tokens[1] != "w" {
 				print_failure(id, "did not understand colour for play")
-				continue
-			}
-			x, y, err := board.XYFromString(tokens[2])
-			if err != nil {
-				print_failure(id, err.Error())
 				continue
 			}
 
@@ -570,6 +566,12 @@ func StartGTP(genmove func(colour int, board *Board) string, name string, versio
 			if tokens[2] == "pass" {
 				board.Pass(colour)
 				print_success(id, "")
+				continue
+			}
+
+			x, y, err := board.XYFromString(tokens[2])
+			if err != nil {
+				print_failure(id, err.Error())
 				continue
 			}
 
