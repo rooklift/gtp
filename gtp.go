@@ -83,22 +83,29 @@ func (b *Board) Copy() *Board {
 	return newboard
 }
 
-func (b *Board) Dump() {
-    for y := 0; y < b.Size; y++ {
-        for x := 0; x < b.Size; x++ {
-            c := '.'
-            if b.Ko.X == x && b.Ko.Y == y {
-            	c = '^'
-            }
-            if b.State[x][y] == BLACK {
-                c = '*'
-            } else if b.State[x][y] == WHITE {
-                c = 'O'
-            }
-            fmt.Printf("%c ", c)
-        }
-        fmt.Printf("\n")
-    }
+func (b *Board) String() string {
+	s := "Current board:\n"
+	for y := 0; y < b.Size; y++ {
+		for x := 0; x < b.Size; x++ {
+			c := '.'
+			if b.Ko.X == x && b.Ko.Y == y {
+				c = '^'
+			}
+			if b.State[x][y] == BLACK {
+				c = '*'
+			} else if b.State[x][y] == WHITE {
+				c = 'O'
+			}
+			s += fmt.Sprintf("%c ", c)
+		}
+		s += "\n"
+	}
+	s += "\n"
+	return s
+}
+
+func (b *Board) Dump() {		// For debug only
+	fmt.Printf(b.String())
 }
 
 func (b *Board) PlayMove(colour, x int, y int) error {
@@ -516,8 +523,7 @@ func StartGTP(genmove func(colour int, board *Board) string, name string, versio
 		// --------------------------------------------------------------------------------------------------
 
 		if tokens[0] == "showboard" {
-			print_success(id, "")
-			board.Dump()
+			print_success(id, board.String())
 			continue
 		}
 
