@@ -1,0 +1,17 @@
+play B D4
+
+play B D6
+
+play B C5
+
+play B E5
+
+play W E6
+
+play W E4
+
+play W F5
+
+play W D5
+
+play B E5
