@@ -125,7 +125,7 @@ func (b *Board) PlayMove(colour, x int, y int) error {
 	last_point_captured := Point{-1, -1}						// If we captured exactly 1 stone, this will record it
 
 	stones_destroyed := 0
-	adj_points := adjacent_points(x, y, b.Size)
+	adj_points := b.AdjacentPoints(x, y)
 
 	for _, point := range(adj_points) {
 		if b.State[point.X][point.Y] == opponent_colour {
@@ -204,7 +204,7 @@ func (b *Board) __group_has_liberties(x int, y int, checked_stones map[Point]boo
 
 	checked_stones[Point{x, y}] = true
 
-	adj_points := adjacent_points(x, y, b.Size)
+	adj_points := b.AdjacentPoints(x, y)
 
 	for _, adj := range(adj_points) {
 		if b.State[adj.X][adj.Y] == EMPTY {
@@ -235,7 +235,7 @@ func (b *Board) DestroyGroup(x int, y int) int {
 	colour := b.State[x][y]
 	b.State[x][y] = EMPTY
 
-	for _, adj := range(adjacent_points(x, y, b.Size)) {
+	for _, adj := range(b.AdjacentPoints(x, y)) {
 		if b.State[adj.X][adj.Y] == colour {
 			stones_destroyed += b.DestroyGroup(adj.X, adj.Y)
 		}
@@ -305,6 +305,41 @@ func (b *Board) AllLegalMoves(colour int) []Point {
 	}
 
 	return all_possible
+}
+
+func (b *Board) AdjacentPoints(x int, y int) []Point {
+
+	var points []Point
+
+	i := x - 1
+	j := y
+
+	if i >= 0 && i < b.Size && j >= 0 && j < b.Size {
+		points = append(points, Point{i, j})
+	}
+
+	i = x + 1
+	j = y
+
+	if i >= 0 && i < b.Size && j >= 0 && j < b.Size {
+		points = append(points, Point{i, j})
+	}
+
+	i = x
+	j = y - 1
+
+	if i >= 0 && i < b.Size && j >= 0 && j < b.Size {
+		points = append(points, Point{i, j})
+	}
+
+	i = x
+	j = y + 1
+
+	if i >= 0 && i < b.Size && j >= 0 && j < b.Size {
+		points = append(points, Point{i, j})
+	}
+
+	return points
 }
 
 func (b *Board) StringFromXY(x, y int) string {
@@ -578,38 +613,4 @@ func one_line_success(id int, s string) {
 
 func one_line_failure(id int, s string) {
 	one_line_reply(id, s, "?")
-}
-
-func adjacent_points(x int, y int, size int) []Point {
-	var points []Point
-
-	i := x - 1
-	j := y
-
-	if i >= 0 && i < size && j >= 0 && j < size {
-		points = append(points, Point{i, j})
-	}
-
-	i = x + 1
-	j = y
-
-	if i >= 0 && i < size && j >= 0 && j < size {
-		points = append(points, Point{i, j})
-	}
-
-	i = x
-	j = y - 1
-
-	if i >= 0 && i < size && j >= 0 && j < size {
-		points = append(points, Point{i, j})
-	}
-
-	i = x
-	j = y + 1
-
-	if i >= 0 && i < size && j >= 0 && j < size {
-		points = append(points, Point{i, j})
-	}
-
-	return points
 }
