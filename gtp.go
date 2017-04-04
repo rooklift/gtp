@@ -28,18 +28,9 @@ type Board struct {
 	NextPlayer int
 }
 
-var known_commands = map[string]bool{
-	"protocol_version": true,
-	"name": true,
-	"version": true,
-	"known_command": true,
-	"list_commands": true,
-	"quit": true,
-	"boardsize": true,
-	"clear_board": true,
-	"komi": true,
-	"play": true,
-	"genmove": true,
+var known_commands = []string{
+	"boardsize", "clear_board", "genmove", "known_command", "komi", "list_commands",
+	"name", "play", "protocol_version", "quit", "showboard", "version",
 }
 
 func NewBoard(size int, komi float64) *Board {
@@ -469,8 +460,8 @@ func StartGTP(genmove func(colour int, board *Board) string, name string, versio
 
 		if tokens[0] == "list_commands" {
 			response := ""
-			for k, _ := range(known_commands) {
-				response += k + "\n"
+			for _, command := range(known_commands) {
+				response += command + "\n"
 			}
 			print_success(id, response)
 			continue
@@ -483,7 +474,13 @@ func StartGTP(genmove func(colour int, board *Board) string, name string, versio
 				print_failure(id, "no argument received for known_command")
 				continue
 			}
-			response := fmt.Sprintf("%v", known_commands[tokens[1]])
+			response := "false"
+			for _, command := range(known_commands) {
+				if command == tokens[1] {
+					response = "true"
+					break
+				}
+			}
 			print_success(id, response)
 			continue
 		}
