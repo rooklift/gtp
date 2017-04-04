@@ -187,8 +187,6 @@ func (b *Board) PlayMove(colour, x int, y int) error {
 		b.NextPlayer = BLACK
 	}
 
-	fmt.Fprintf(os.Stderr, "%s\n", StringFromXY(b.Ko.X, b.Ko.Y, b.Size))
-
 	return nil
 }
 
@@ -307,6 +305,53 @@ func (b *Board) AllLegalMoves(colour int) []Point {
 	}
 
 	return all_possible
+}
+
+func (b *Board) StringFromXY(x, y int) string {
+	letter := 'A' + x
+	if letter >= 'I' {
+		letter += 1
+	}
+	number := b.Size - y
+	return fmt.Sprintf("%c%d", letter, number)
+}
+
+func (b *Board) StringFromPoint(p Point) string {
+	return b.StringFromXY(p.X, p.Y)
+}
+
+func (b *Board) XYFromString(s string) (int, int, error) {
+
+	if len(s) < 2 {
+		return -1, -1, fmt.Errorf("coordinate string too short")
+	}
+
+	letter := strings.ToLower(s)[0]
+
+	if letter < 'a' || letter > 'z' {
+		return -1, -1, fmt.Errorf("letter part of coordinate not in range a-z")
+	}
+
+	if letter == 'i' {
+		return -1, -1, fmt.Errorf("letter i not permitted")
+	}
+
+	x := int((letter - 'a'))
+	if letter > 'i' {
+		x -= 1
+	}
+
+	tmp, err := strconv.Atoi(s[1:])
+	if err != nil {
+		return -1, -1, fmt.Errorf("couldn't parse number part of coordinate")
+	}
+	y := (b.Size - tmp)
+
+	if x >= b.Size || y >= b.Size || x < 0 || y < 0 {
+		return -1, -1, fmt.Errorf("coordinate off board")
+	}
+
+	return x, y, nil
 }
 
 func StartGTP(genmove func(colour int, board *Board) string, name string, version string) {
@@ -437,7 +482,7 @@ func StartGTP(genmove func(colour int, board *Board) string, name string, versio
 				one_line_failure(id, "did not understand colour for play")
 				continue
 			}
-			x, y, err := XYFromString(tokens[2], board.Size)
+			x, y, err := board.XYFromString(tokens[2])
 			if err != nil {
 				one_line_failure(id, err.Error())
 				continue
@@ -456,11 +501,7 @@ func StartGTP(genmove func(colour int, board *Board) string, name string, versio
 				continue
 			}
 
-			fmt.Fprintf(os.Stderr, "%s\n", StringFromXY(board.Ko.X, board.Ko.Y, board.Size))
-
 			err = board.PlayMove(colour, x, y)
-
-			fmt.Fprintf(os.Stderr, "%s\n", StringFromXY(board.Ko.X, board.Ko.Y, board.Size))
 
 			if err != nil {
 				one_line_failure(id, err.Error())
@@ -495,7 +536,7 @@ func StartGTP(genmove func(colour int, board *Board) string, name string, versio
 			if s == "pass" {
 				board.Pass(colour)
 			} else {
-				x, y, err := XYFromString(s, board.Size)
+				x, y, err := board.XYFromString(s)
 				if err != nil {
 					one_line_failure(id, fmt.Sprintf("illegal move from engine: %s (%v)", s, err))
 					continue
@@ -517,49 +558,6 @@ func StartGTP(genmove func(colour int, board *Board) string, name string, versio
 	}
 
 	return
-}
-
-func StringFromXY(x, y, size int)  string {
-	letter := 'A' + x
-	if letter >= 'I' {
-		letter += 1
-	}
-	number := size - y
-	return fmt.Sprintf("%c%d", letter, number)
-}
-
-func XYFromString(s string, size int)  (int, int, error) {
-
-	if len(s) < 2 {
-		return -1, -1, fmt.Errorf("coordinate string too short")
-	}
-
-	letter := strings.ToLower(s)[0]
-
-	if letter < 'a' || letter > 'z' {
-		return -1, -1, fmt.Errorf("letter part of coordinate not in range a-z")
-	}
-
-	if letter == 'i' {
-		return -1, -1, fmt.Errorf("letter i not permitted")
-	}
-
-	x := int((letter - 'a'))
-	if letter > 'i' {
-		x -= 1
-	}
-
-	tmp, err := strconv.Atoi(s[1:])
-	if err != nil {
-		return -1, -1, fmt.Errorf("couldn't parse number part of coordinate")
-	}
-	y := (size - tmp)
-
-	if x >= size || y >= size || x < 0 || y < 0 {
-		return -1, -1, fmt.Errorf("coordinate off board")
-	}
-
-	return x, y, nil
 }
 
 func one_line_reply(id int, s string, shebang string) {
