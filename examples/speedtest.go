@@ -8,8 +8,8 @@ import (
 	gtp ".."
 )
 
-const RUNS = 100
-const DEPTH = 10
+const RUNS = 1000
+const DEPTH = 50
 
 func init() {
 	rand.Seed(time.Now().UTC().UnixNano())
