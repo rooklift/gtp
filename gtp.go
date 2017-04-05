@@ -10,6 +10,7 @@ import (
 )
 
 const (
+	BORDER = -1
 	EMPTY = 0
 	BLACK = 1
 	WHITE = 2
@@ -33,12 +34,22 @@ var known_commands = []string{
 	"name", "play", "protocol_version", "quit", "showboard", "version",
 }
 
+// Board arrays are 2D arrays of (size + 2) x (size + 2)
+// with explicit borders.
+
 func NewBoard(size int, komi float64) *Board {
 	var board Board
 
-	board.State = make([][]int, size)
+	board.State = make([][]int, size + 2)
 	for i := range(board.State) {
-		board.State[i] = make([]int, size)
+		board.State[i] = make([]int, size + 2)
+	}
+
+	for i := 0; i < size + 2; i++ {
+		board.State[i][0] = BORDER
+		board.State[i][size + 1] = BORDER
+		board.State[0][i] = BORDER
+		board.State[size + 1][i] = BORDER
 	}
 
 	board.Ko.X = -1
@@ -51,8 +62,8 @@ func NewBoard(size int, komi float64) *Board {
 }
 
 func (b *Board) Clear() {
-	for y := 0; y < b.Size; y++ {
-		for x := 0; x < b.Size; x++ {
+	for y := 1; y <= b.Size; y++ {
+		for x := 1; x <= b.Size; x++ {
 			b.State[x][y] = EMPTY
 		}
 	}
@@ -62,9 +73,9 @@ func (b *Board) Clear() {
 }
 
 func (b *Board) Copy() *Board {
-	newboard := NewBoard(b.Size, b.Komi)
-	for y := 0; y < b.Size; y++ {
-		for x := 0; x < b.Size; x++ {
+	newboard := NewBoard(b.Size, b.Komi)	// Does the borders for us
+	for y := 1; y <= b.Size; y++ {
+		for x := 1; x <= b.Size; x++ {
 			newboard.State[x][y] = b.State[x][y]
 		}
 	}
@@ -76,14 +87,14 @@ func (b *Board) Copy() *Board {
 
 func (b *Board) String() string {
 	s := "Current board:\n"
-	for y := 0; y < b.Size; y++ {
-		for x := 0; x < b.Size; x++ {
+	for y := 1; y <= b.Size; y++ {
+		for x := 1; x <= b.Size; x++ {
 			c := '.'
 			if b.Ko.X == x && b.Ko.Y == y {
-				c = '^'
+				c = '*'
 			}
 			if b.State[x][y] == BLACK {
-				c = '*'
+				c = 'X'
 			} else if b.State[x][y] == WHITE {
 				c = 'O'
 			}
@@ -113,7 +124,7 @@ func (b *Board) PlayMove(colour, x int, y int) error {
 		opponent_colour = BLACK
 	}
 
-	if x < 0 || x >= b.Size || y < 0 || y >= b.Size {
+	if x < 1 || x > b.Size || y < 1 || y > b.Size {
 		return fmt.Errorf("coordinate off board")
 	}
 
@@ -124,11 +135,10 @@ func (b *Board) PlayMove(colour, x int, y int) error {
 	// Disallow playing on the ko square...
 
 	if colour == b.NextPlayer && b.Ko.X == x && b.Ko.Y == y {
-		// b.State[x][y] = EMPTY								// Not needed as long as we make the move after ko check
 		return fmt.Errorf("illegal ko recapture")
 	}
 
-	// NOTE: WE ACTUALLY MAKE THE MOVE HERE...
+	// We must make the move here, AFTER the ko check...
 
 	b.State[x][y] = colour
 
@@ -137,7 +147,7 @@ func (b *Board) PlayMove(colour, x int, y int) error {
 	last_point_captured := Point{-1, -1}						// If we captured exactly 1 stone, this will record it
 
 	stones_destroyed := 0
-	adj_points := b.AdjacentPoints(x, y)
+	adj_points := AdjacentPoints(x, y)
 
 	for _, point := range(adj_points) {
 		if b.State[point.X][point.Y] == opponent_colour {
@@ -204,7 +214,7 @@ func (b *Board) PlayMove(colour, x int, y int) error {
 
 func (b *Board) GroupHasLiberties(x int, y int) bool {
 
-	if x < 0 || y < 0 || x >= b.Size || y >= b.Size {
+	if x < 1 || y < 1 || x > b.Size || y > b.Size {
 		panic("GroupHasLiberties() called with illegal x,y")
 	}
 
@@ -216,7 +226,7 @@ func (b *Board) __group_has_liberties(x int, y int, checked_stones map[Point]boo
 
 	checked_stones[Point{x, y}] = true
 
-	adj_points := b.AdjacentPoints(x, y)
+	adj_points := AdjacentPoints(x, y)
 
 	for _, adj := range(adj_points) {
 		if b.State[adj.X][adj.Y] == EMPTY {
@@ -239,7 +249,7 @@ func (b *Board) __group_has_liberties(x int, y int, checked_stones map[Point]boo
 
 func (b *Board) DestroyGroup(x int, y int) int {
 
-	if x < 0 || y < 0 || x >= b.Size || y >= b.Size {
+	if x < 1 || y < 1 || x > b.Size || y > b.Size {
 		panic("DestroyGroup() called with illegal x,y")
 	}
 
@@ -247,7 +257,7 @@ func (b *Board) DestroyGroup(x int, y int) int {
 	colour := b.State[x][y]
 	b.State[x][y] = EMPTY
 
-	for _, adj := range(b.AdjacentPoints(x, y)) {
+	for _, adj := range(AdjacentPoints(x, y)) {
 		if b.State[adj.X][adj.Y] == colour {
 			stones_destroyed += b.DestroyGroup(adj.X, adj.Y)
 		}
@@ -299,8 +309,8 @@ func (b *Board) AllLegalMoves(colour int) []Point {
 
 	var all_possible []Point
 
-	for x := 0; x < b.Size; x++ {
-		for y := 0; y < b.Size; y++ {
+	for x := 1; x <= b.Size; x++ {
+		for y := 1; y <= b.Size; y++ {
 
 			if b.State[x][y] != EMPTY {
 				continue
@@ -319,47 +329,12 @@ func (b *Board) AllLegalMoves(colour int) []Point {
 	return all_possible
 }
 
-func (b *Board) AdjacentPoints(x int, y int) []Point {
-
-	var points []Point
-
-	i := x - 1
-	j := y
-
-	if i >= 0 && i < b.Size && j >= 0 && j < b.Size {
-		points = append(points, Point{i, j})
-	}
-
-	i = x + 1
-	j = y
-
-	if i >= 0 && i < b.Size && j >= 0 && j < b.Size {
-		points = append(points, Point{i, j})
-	}
-
-	i = x
-	j = y - 1
-
-	if i >= 0 && i < b.Size && j >= 0 && j < b.Size {
-		points = append(points, Point{i, j})
-	}
-
-	i = x
-	j = y + 1
-
-	if i >= 0 && i < b.Size && j >= 0 && j < b.Size {
-		points = append(points, Point{i, j})
-	}
-
-	return points
-}
-
 func (b *Board) StringFromXY(x, y int) string {
-	letter := 'A' + x
+	letter := 'A' + x - 1
 	if letter >= 'I' {
 		letter += 1
 	}
-	number := b.Size - y
+	number := b.Size + 1 - y
 	return fmt.Sprintf("%c%d", letter, number)
 }
 
@@ -383,7 +358,7 @@ func (b *Board) XYFromString(s string) (int, int, error) {
 		return -1, -1, fmt.Errorf("letter i not permitted")
 	}
 
-	x := int((letter - 'a'))
+	x := int((letter - 'a') + 1)
 	if letter > 'i' {
 		x -= 1
 	}
@@ -392,13 +367,17 @@ func (b *Board) XYFromString(s string) (int, int, error) {
 	if err != nil {
 		return -1, -1, fmt.Errorf("couldn't parse number part of coordinate")
 	}
-	y := (b.Size - tmp)
+	y := (b.Size + 1 - tmp)
 
-	if x >= b.Size || y >= b.Size || x < 0 || y < 0 {
+	if x > b.Size || y > b.Size || x < 1 || y < 1 {
 		return -1, -1, fmt.Errorf("coordinate off board")
 	}
 
 	return x, y, nil
+}
+
+func AdjacentPoints(x int, y int) []Point {
+	return []Point{Point{x - 1, y}, Point{x + 1, y}, Point{x, y - 1}, Point{x, y + 1}}
 }
 
 func StartGTP(genmove func(colour int, board *Board) string, name string, version string) {
