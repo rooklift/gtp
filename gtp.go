@@ -41,7 +41,7 @@ func NewBoard(size int, komi float64) *Board {
 	var board Board
 
 	board.State = make([][]int, size + 2)
-	for i := range(board.State) {
+	for i := 0; i < size + 2; i++ {
 		board.State[i] = make([]int, size + 2)
 	}
 
@@ -149,7 +149,7 @@ func (b *Board) PlayMove(colour, x int, y int) error {
 	stones_destroyed := 0
 	adj_points := AdjacentPoints(x, y)
 
-	for _, point := range(adj_points) {
+	for _, point := range adj_points {
 		if b.State[point.X][point.Y] == opponent_colour {
 			if b.GroupHasLiberties(point.X, point.Y) == false {
 				stones_destroyed += b.DestroyGroup(point.X, point.Y)
@@ -185,7 +185,7 @@ func (b *Board) PlayMove(colour, x int, y int) error {
 		liberties := 0
 		friend_flag := false
 
-		for _, point := range(adj_points) {
+		for _, point := range adj_points {
 			if b.State[point.X][point.Y] == EMPTY {
 				liberties += 1
 			}
@@ -228,13 +228,13 @@ func (b *Board) __group_has_liberties(x int, y int, checked_stones map[Point]boo
 
 	adj_points := AdjacentPoints(x, y)
 
-	for _, adj := range(adj_points) {
+	for _, adj := range adj_points {
 		if b.State[adj.X][adj.Y] == EMPTY {
 			return true
 		}
 	}
 
-	for _, adj := range(adj_points) {
+	for _, adj := range adj_points {
 		if b.State[adj.X][adj.Y] == b.State[x][y] {
 			if checked_stones[Point{adj.X, adj.Y}] == false {
 				if b.__group_has_liberties(adj.X, adj.Y, checked_stones) {
@@ -257,7 +257,7 @@ func (b *Board) DestroyGroup(x int, y int) int {
 	colour := b.State[x][y]
 	b.State[x][y] = EMPTY
 
-	for _, adj := range(AdjacentPoints(x, y)) {
+	for _, adj := range AdjacentPoints(x, y) {
 		if b.State[adj.X][adj.Y] == colour {
 			stones_destroyed += b.DestroyGroup(adj.X, adj.Y)
 		}
@@ -317,9 +317,7 @@ func (b *Board) AllLegalMoves(colour int) []Point {
 				continue
 			}
 
-			adj_points := AdjacentPoints(x, y)
-
-			for _, point := range adj_points {
+			for _, point := range AdjacentPoints(x, y) {
 				if b.State[point.X][point.Y] == EMPTY {
 					all_possible = append(all_possible, Point{x, y})	// Move is clearly legal since some of its neighbours are empty
 					continue Y_LOOP
@@ -449,7 +447,7 @@ func StartGTP(genmove func(colour int, board *Board) string, name string, versio
 
 		if tokens[0] == "list_commands" {
 			response := ""
-			for _, command := range(known_commands) {
+			for _, command := range known_commands {
 				response += command + "\n"
 			}
 			print_success(id, response)
@@ -464,7 +462,7 @@ func StartGTP(genmove func(colour int, board *Board) string, name string, versio
 				continue
 			}
 			response := "false"
-			for _, command := range(known_commands) {
+			for _, command := range known_commands {
 				if command == tokens[1] {
 					response = "true"
 					break
