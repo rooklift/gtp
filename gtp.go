@@ -17,16 +17,16 @@ const (
 )
 
 type Point struct {
-	X int
-	Y int
+	X				int
+	Y				int
 }
 
 type Board struct {
-	State [][]int
-	Ko Point
-	Size int
-	Komi float64
-	NextPlayer int
+	State			[][]int
+	Ko 				Point
+	Size			int
+	Komi			float64
+	NextPlayer		int
 }
 
 var known_commands = []string{
@@ -310,13 +310,26 @@ func (b *Board) AllLegalMoves(colour int) []Point {
 	var all_possible []Point
 
 	for x := 1; x <= b.Size; x++ {
+		Y_LOOP:
 		for y := 1; y <= b.Size; y++ {
 
 			if b.State[x][y] != EMPTY {
 				continue
 			}
 
-			_, err := b.NewFromMove(colour, x, y)		// This is very crude
+			adj_points := AdjacentPoints(x, y)
+
+			for _, point := range adj_points {
+				if b.State[point.X][point.Y] == EMPTY {
+					all_possible = append(all_possible, Point{x, y})	// Move is clearly legal since some of its neighbours are empty
+					continue Y_LOOP
+				}
+			}
+
+			// The move we are playing will have no liberties of its own.
+			// So check it. This is crude...
+
+			_, err := b.NewFromMove(colour, x, y)
 
 			if err != nil {
 				continue
