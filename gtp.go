@@ -310,8 +310,8 @@ func (b *Board) AllLegalMoves(colour int) []Point {
 	var all_possible []Point
 
 	for x := 1; x <= b.Size; x++ {
-		Y_LOOP:
-		for y := 1; y <= b.Size; y++ {
+
+		Y_LOOP: for y := 1; y <= b.Size; y++ {
 
 			if b.State[x][y] != EMPTY {
 				continue
@@ -327,15 +327,12 @@ func (b *Board) AllLegalMoves(colour int) []Point {
 			}
 
 			// The move we are playing will have no liberties of its own.
-			// So check it. This is crude...
+			// So check it by trying it. This is crude...
 
 			_, err := b.NewFromMove(colour, x, y)
-
-			if err != nil {
-				continue
+			if err == nil {
+				all_possible = append(all_possible, Point{x, y})
 			}
-
-			all_possible = append(all_possible, Point{x, y})
 		}
 	}
 
