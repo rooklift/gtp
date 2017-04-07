@@ -546,6 +546,7 @@ func StartGTP(genmove func(colour int, board *Board) string, name string, versio
 				continue
 			}
 			board = NewBoard(size, board.Komi)
+			history = nil
 			print_success(id, "")
 			continue
 		}
