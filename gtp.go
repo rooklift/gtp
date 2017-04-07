@@ -12,8 +12,8 @@ import (
 const (
 	BORDER = -1
 	EMPTY = 0
-	BLACK = 1
-	WHITE = 2
+	BLACK = 1					// Don't change
+	WHITE = 2					// these now
 )
 
 type Point struct {
@@ -36,8 +36,7 @@ var known_commands = []string{
 	"name", "play", "protocol_version", "quit", "showboard", "undo", "version",
 }
 
-// Board arrays are 2D arrays of (size + 2) x (size + 2)
-// with explicit borders.
+var bw_strings = []string{"??", "Black", "White"}		// Relies on BLACK == 1 and WHITE == 2
 
 func NewBoard(size int, komi float64) *Board {
 	var board Board
@@ -48,6 +47,10 @@ func NewBoard(size int, komi float64) *Board {
 }
 
 func (b *Board) Clear() {
+
+	// Board arrays are 2D arrays of (size + 2) x (size + 2)
+	// with explicit borders.
+
 	b.State = make([][]int, b.Size + 2)
 	for i := 0; i < b.Size + 2; i++ {
 		b.State[i] = make([]int, b.Size + 2)
@@ -99,6 +102,8 @@ func (b *Board) String() string {
 	}
 	s += fmt.Sprintf("Captures by Black: %d\n", b.CapsByBlack)
 	s += fmt.Sprintf("Captures by White: %d\n", b.CapsByWhite)
+	s += fmt.Sprintf("Komi: %.1f\n", b.Komi)
+	s += fmt.Sprintf("Next: %s\n", bw_strings[b.NextPlayer])
 	s += "\n"
 	return s
 }
