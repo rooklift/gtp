@@ -27,11 +27,13 @@ type Board struct {
 	Size			int
 	Komi			float64
 	NextPlayer		int
+	CapsByBlack		int
+	CapsByWhite		int
 }
 
 var known_commands = []string{
 	"boardsize", "clear_board", "genmove", "known_command", "komi", "list_commands",
-	"name", "play", "protocol_version", "quit", "showboard", "version",
+	"name", "play", "protocol_version", "quit", "showboard", "undo", "version",
 }
 
 // Board arrays are 2D arrays of (size + 2) x (size + 2)
@@ -39,41 +41,32 @@ var known_commands = []string{
 
 func NewBoard(size int, komi float64) *Board {
 	var board Board
-
-	board.State = make([][]int, size + 2)
-	for i := 0; i < size + 2; i++ {
-		board.State[i] = make([]int, size + 2)
-	}
-
-	for i := 0; i < size + 2; i++ {
-		board.State[i][0] = BORDER
-		board.State[i][size + 1] = BORDER
-		board.State[0][i] = BORDER
-		board.State[size + 1][i] = BORDER
-	}
-
-	board.Ko.X = -1
-	board.Ko.Y = -1
 	board.Size = size
 	board.Komi = komi
-	board.NextPlayer = BLACK
-
+	board.Clear()
 	return &board
 }
 
 func (b *Board) Clear() {
-	for y := 1; y <= b.Size; y++ {
-		for x := 1; x <= b.Size; x++ {
-			b.State[x][y] = EMPTY
-		}
+	b.State = make([][]int, b.Size + 2)
+	for i := 0; i < b.Size + 2; i++ {
+		b.State[i] = make([]int, b.Size + 2)
+	}
+	for i := 0; i < b.Size + 2; i++ {
+		b.State[i][0] = BORDER
+		b.State[i][b.Size + 1] = BORDER
+		b.State[0][i] = BORDER
+		b.State[b.Size + 1][i] = BORDER
 	}
 	b.Ko.X = -1
 	b.Ko.Y = -1
 	b.NextPlayer = BLACK
+	b.CapsByBlack = 0
+	b.CapsByWhite = 0
 }
 
 func (b *Board) Copy() *Board {
-	newboard := NewBoard(b.Size, b.Komi)	// Does the borders for us
+	newboard := NewBoard(b.Size, b.Komi)	// Does the borders for us, as well as size and komi
 	for y := 1; y <= b.Size; y++ {
 		for x := 1; x <= b.Size; x++ {
 			newboard.State[x][y] = b.State[x][y]
@@ -82,6 +75,8 @@ func (b *Board) Copy() *Board {
 	newboard.Ko.X = b.Ko.X
 	newboard.Ko.Y = b.Ko.Y
 	newboard.NextPlayer = b.NextPlayer
+	newboard.CapsByBlack = b.CapsByBlack
+	newboard.CapsByWhite = b.CapsByWhite
 	return newboard
 }
 
@@ -102,6 +97,8 @@ func (b *Board) String() string {
 		}
 		s += "\n"
 	}
+	s += fmt.Sprintf("Captures by Black: %d\n", b.CapsByBlack)
+	s += fmt.Sprintf("Captures by White: %d\n", b.CapsByWhite)
 	s += "\n"
 	return s
 }
@@ -152,7 +149,7 @@ func (b *Board) PlayMove(colour, x int, y int) error {
 	for _, point := range adj_points {
 		if b.State[point.X][point.Y] == opponent_colour {
 			if b.GroupHasLiberties(point.X, point.Y) == false {
-				stones_destroyed += b.DestroyGroup(point.X, point.Y)
+				stones_destroyed += b.destroy_group(point.X, point.Y)
 				last_point_captured = Point{point.X, point.Y}
 			}
 		}
@@ -201,7 +198,15 @@ func (b *Board) PlayMove(colour, x int, y int) error {
 		}
 	}
 
-	// Set colour of next player...
+	// Update some board info...
+
+	if stones_destroyed > 0 {
+		if colour == BLACK {
+			b.CapsByBlack += stones_destroyed
+		} else {
+			b.CapsByWhite += stones_destroyed
+		}
+	}
 
 	if colour == BLACK {
 		b.NextPlayer = WHITE
@@ -219,10 +224,10 @@ func (b *Board) GroupHasLiberties(x int, y int) bool {
 	}
 
 	checked_stones := make(map[Point]bool)
-	return b.__group_has_liberties(x, y, checked_stones)
+	return b.group_has_liberties(x, y, checked_stones)
 }
 
-func (b *Board) __group_has_liberties(x int, y int, checked_stones map[Point]bool) bool {
+func (b *Board) group_has_liberties(x int, y int, checked_stones map[Point]bool) bool {
 
 	checked_stones[Point{x, y}] = true
 
@@ -237,7 +242,7 @@ func (b *Board) __group_has_liberties(x int, y int, checked_stones map[Point]boo
 	for _, adj := range adj_points {
 		if b.State[adj.X][adj.Y] == b.State[x][y] {
 			if checked_stones[Point{adj.X, adj.Y}] == false {
-				if b.__group_has_liberties(adj.X, adj.Y, checked_stones) {
+				if b.group_has_liberties(adj.X, adj.Y, checked_stones) {
 					return true
 				}
 			}
@@ -247,10 +252,10 @@ func (b *Board) __group_has_liberties(x int, y int, checked_stones map[Point]boo
 	return false
 }
 
-func (b *Board) DestroyGroup(x int, y int) int {
+func (b *Board) destroy_group(x int, y int) int {
 
 	if x < 1 || y < 1 || x > b.Size || y > b.Size {
-		panic("DestroyGroup() called with illegal x,y")
+		panic("destroy_group() called with illegal x,y")
 	}
 
 	stones_destroyed := 1
@@ -259,7 +264,7 @@ func (b *Board) DestroyGroup(x int, y int) int {
 
 	for _, adj := range AdjacentPoints(x, y) {
 		if b.State[adj.X][adj.Y] == colour {
-			stones_destroyed += b.DestroyGroup(adj.X, adj.Y)
+			stones_destroyed += b.destroy_group(adj.X, adj.Y)
 		}
 	}
 
@@ -390,6 +395,8 @@ func AdjacentPoints(x int, y int) []Point {
 
 func StartGTP(genmove func(colour int, board *Board) string, name string, version string) {
 
+	var history []*Board
+
 	board := NewBoard(19, 0.0)
 
 	scanner := bufio.NewScanner(os.Stdin)
@@ -484,7 +491,12 @@ func StartGTP(genmove func(colour int, board *Board) string, name string, versio
 				print_failure(id, "couldn't parse komi float")
 				continue
 			}
+
 			board.Komi = komi
+			for i := 0; i < len(history); i++ {		// Since komi is in the boards, change it through history
+				history[i].Komi = komi
+			}
+
 			print_success(id, "")
 			continue
 		}
@@ -493,6 +505,7 @@ func StartGTP(genmove func(colour int, board *Board) string, name string, versio
 
 		if tokens[0] == "clear_board" {
 			board.Clear()
+			history = nil
 			print_success(id, "")
 			continue
 		}
@@ -554,22 +567,27 @@ func StartGTP(genmove func(colour int, board *Board) string, name string, versio
 			}
 
 			if tokens[2] == "pass" {
-				board.Pass(colour)
-				print_success(id, "")
-				continue
-			}
 
-			x, y, err := board.XYFromString(tokens[2])
-			if err != nil {
-				print_failure(id, err.Error())
-				continue
-			}
+				newboard, _ := board.NewFromPass(colour)
+				history = append(history, board)
+				board = newboard
 
-			err = board.PlayMove(colour, x, y)
+			} else {
 
-			if err != nil {
-				print_failure(id, err.Error())
-				continue
+				x, y, err := board.XYFromString(tokens[2])
+				if err != nil {
+					print_failure(id, err.Error())
+					continue
+				}
+
+				newboard, err := board.NewFromMove(colour, x, y)
+				if err != nil {
+					print_failure(id, err.Error())
+					continue
+				}
+
+				history = append(history, board)
+				board = newboard
 			}
 
 			print_success(id, "")
@@ -579,10 +597,12 @@ func StartGTP(genmove func(colour int, board *Board) string, name string, versio
 		// --------------------------------------------------------------------------------------------------
 
 		if tokens[0] == "genmove" {
+
 			if len(tokens) < 2 {
 				print_failure(id, "no argument received for genmove")
 				continue
 			}
+
 			if tokens[1] != "black" && tokens[1] != "b" && tokens[1] != "white" && tokens[1] != "w" {
 				print_failure(id, "did not understand colour for play")
 				continue
@@ -598,22 +618,46 @@ func StartGTP(genmove func(colour int, board *Board) string, name string, versio
 			s := genmove(colour, board.Copy())		// Send the engine a copy, not the real thing
 
 			if s == "pass" {
-				board.Pass(colour)
+
+				newboard, _ := board.NewFromPass(colour)
+				history = append(history, board)
+				board = newboard
+
 			} else {
+
 				x, y, err := board.XYFromString(s)
 				if err != nil {
 					print_failure(id, fmt.Sprintf("illegal move from engine: %s (%v)", s, err))
 					continue
 				}
-				err = board.PlayMove(colour, x, y)
+
+				newboard, err := board.NewFromMove(colour, x, y)
 				if err != nil {
 					print_failure(id, fmt.Sprintf("illegal move from engine: %s (%v)", s, err))
 					continue
 				}
+
+				history = append(history, board)
+				board = newboard
 			}
 
 			print_success(id, s)
 			continue
+		}
+
+		// --------------------------------------------------------------------------------------------------
+
+		if tokens[0] == "undo" {
+
+			if len(history) == 0 {
+				print_failure(id, "cannot undo")
+				continue
+			} else {
+				board = history[len(history) - 1]
+				history = history[0:len(history) - 1]
+				print_success(id, "")
+				continue
+			}
 		}
 
 		// --------------------------------------------------------------------------------------------------
