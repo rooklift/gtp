@@ -610,7 +610,7 @@ func StartGTP(genmove func(colour int, board *Board) string, name string, versio
 			}
 
 			if tokens[1] != "black" && tokens[1] != "b" && tokens[1] != "white" && tokens[1] != "w" {
-				print_failure(id, "did not understand colour for play")
+				print_failure(id, "did not understand colour for genmove")
 				continue
 			}
 
