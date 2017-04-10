@@ -205,18 +205,12 @@ func (b *Board) PlayMove(colour, x int, y int) error {
 
 	// Update some board info...
 
-	if stones_destroyed > 0 {
-		if colour == BLACK {
-			b.CapsByBlack += stones_destroyed
-		} else {
-			b.CapsByWhite += stones_destroyed
-		}
-	}
-
 	if colour == BLACK {
 		b.NextPlayer = WHITE
+		b.CapsByBlack += stones_destroyed
 	} else {
 		b.NextPlayer = BLACK
+		b.CapsByWhite += stones_destroyed
 	}
 
 	return nil
