@@ -112,7 +112,7 @@ func (b *Board) Dump() {		// For debug only
 	fmt.Printf(b.String())
 }
 
-func (b *Board) PlayMove(colour, x int, y int) error {
+func (b *Board) PlayMove(colour, x, y int) error {
 
 	if colour != BLACK && colour != WHITE {
 		return fmt.Errorf("colour neither black nor white")
@@ -216,7 +216,7 @@ func (b *Board) PlayMove(colour, x int, y int) error {
 	return nil
 }
 
-func (b *Board) GroupHasLiberties(x int, y int) bool {
+func (b *Board) GroupHasLiberties(x, y int) bool {
 
 	if x < 1 || y < 1 || x > b.Size || y > b.Size {
 		panic("GroupHasLiberties() called with illegal x,y")
@@ -226,7 +226,7 @@ func (b *Board) GroupHasLiberties(x int, y int) bool {
 	return b.group_has_liberties(x, y, checked_stones)
 }
 
-func (b *Board) group_has_liberties(x int, y int, checked_stones map[Point]bool) bool {
+func (b *Board) group_has_liberties(x, y int, checked_stones map[Point]bool) bool {
 
 	checked_stones[Point{x, y}] = true
 
@@ -251,7 +251,7 @@ func (b *Board) group_has_liberties(x int, y int, checked_stones map[Point]bool)
 	return false
 }
 
-func (b *Board) destroy_group(x int, y int) int {
+func (b *Board) destroy_group(x, y int) int {
 
 	if x < 1 || y < 1 || x > b.Size || y > b.Size {
 		panic("destroy_group() called with illegal x,y")
@@ -287,7 +287,7 @@ func (b *Board) Pass(colour int) error {
 	return nil
 }
 
-func (b *Board) NewFromMove(colour int, x int, y int) (*Board, error) {
+func (b *Board) NewFromMove(colour, x, y int) (*Board, error) {
 	newboard := b.Copy()
 	err := newboard.PlayMove(colour, x, y)
 	if err != nil {
@@ -388,7 +388,7 @@ func (b *Board) XYFromString(s string) (int, int, error) {
 	return x, y, nil
 }
 
-func AdjacentPoints(x int, y int) []Point {
+func AdjacentPoints(x, y int) []Point {
 	return []Point{Point{x - 1, y}, Point{x + 1, y}, Point{x, y - 1}, Point{x, y + 1}}
 }
 
@@ -664,8 +664,6 @@ func StartGTP(genmove func(colour int, board *Board) string, name string, versio
 
 		print_failure(id, "unknown command")
 	}
-
-	return
 }
 
 func print_reply(id int, s string, shebang string) {
