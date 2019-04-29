@@ -18,7 +18,7 @@ func main() {
 func genmove(colour int, board *gtp.Board) string {
 	all_possible := board.AllLegalMoves(colour)
 	if len(all_possible) == 0 {
-		return "pass"
+		return "resign"
 	}
 	i := rand.Intn(len(all_possible))
 	s := board.StringFromPoint(all_possible[i])
