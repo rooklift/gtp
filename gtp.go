@@ -146,7 +146,7 @@ func (b *Board) PlayMove(colour, x, y int) error {
 
 	// Normal captures...
 
-	last_point_captured := Point{-1, -1}						// If we captured exactly 1 stone, this will record it
+	possible_ko_square := Point{-1, -1}						// If we captured exactly 1 stone, this will record it
 
 	stones_destroyed := 0
 	adj_points := AdjacentPoints(x, y)
@@ -155,7 +155,7 @@ func (b *Board) PlayMove(colour, x, y int) error {
 		if b.State[point.X][point.Y] == opponent_colour {
 			if b.GroupHasLiberties(point.X, point.Y) == false {
 				stones_destroyed += b.destroy_group(point.X, point.Y)
-				last_point_captured = Point{point.X, point.Y}
+				possible_ko_square = Point{point.X, point.Y}
 			}
 		}
 	}
@@ -179,8 +179,8 @@ func (b *Board) PlayMove(colour, x, y int) error {
 
 		// Provisonally set the ko square to be the captured square...
 
-		b.Ko.X = last_point_captured.X
-		b.Ko.Y = last_point_captured.Y
+		b.Ko.X = possible_ko_square.X
+		b.Ko.Y = possible_ko_square.Y
 
 		// But unset it if the capturing stone has any friendly neighbours or > 1 liberty
 
@@ -622,6 +622,10 @@ func StartGTP(genmove func(colour int, board *Board) string, name string, versio
 				newboard, _ := board.NewFromPass(colour)
 				history = append(history, board)
 				board = newboard
+
+			} else if s == "resign" {
+
+				// no need to do anything here
 
 			} else {
 
