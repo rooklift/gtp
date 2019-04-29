@@ -17,7 +17,7 @@ func main() {
 }
 
 func genmove(board *sgf.Board, colour sgf.Colour) string {
-	all_possible := gtp.AllLegalMoves(board, colour)
+	all_possible := gtp.AllLegalMoves(board, colour)	// Returns moves in SGF format, e.g. ["dd", "dg" ...]
 	if len(all_possible) == 0 {
 		return "resign"
 	}
