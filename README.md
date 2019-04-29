@@ -10,4 +10,4 @@ Requires [fohristiwhirl/sgf](https://github.com/fohristiwhirl/sgf) library.
 
 # Technical notes
 
-Behind the scenes, the library is generating an SGF tree of the game, and using the sgf library for legality checking and undo functionality. The custom GTP command "savesgf" can be used to dump that as a file.
+Behind the scenes, the library is generating an SGF tree of the game, and using the sgf library for legality checking and undo functionality. The custom GTP command `savesgf` can be used to dump that as a file.
