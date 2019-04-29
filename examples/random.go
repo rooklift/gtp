@@ -8,11 +8,8 @@ import (
 	sgf "github.com/fohristiwhirl/sgf"
 )
 
-func init() {
-	rand.Seed(time.Now().UTC().UnixNano())
-}
-
 func main() {
+	rand.Seed(time.Now().UTC().UnixNano())
 	gtp.StartGTP(genmove, "Random", "1.0")
 }
 
