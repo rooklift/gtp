@@ -12,7 +12,7 @@ import (
 
 var known_commands = []string{
 	"boardsize", "clear_board", "genmove", "known_command", "komi", "list_commands",
-	"name", "play", "protocol_version", "quit", "showboard", "undo", "version",
+	"name", "play", "protocol_version", "quit", "savesgf", "showboard", "undo", "version",
 }
 
 func StartGTP(genmove func(board *sgf.Board, colour sgf.Colour) string, name string, version string) {
@@ -155,6 +155,24 @@ func StartGTP(genmove func(board *sgf.Board, colour sgf.Colour) string, name str
 
 		// --------------------------------------------------------------------------------------------------
 
+		if tokens[0] == "savesgf" {
+			if len(tokens) < 2 {
+				print_failure(id, "no argument received for savesgf")
+				continue
+			}
+
+			err := node.Save(tokens[1])
+			if err != nil {
+				print_failure(id, err.Error())
+				continue
+			}
+
+			print_success(id, "")
+			continue
+		}
+
+		// --------------------------------------------------------------------------------------------------
+
 		if tokens[0] == "boardsize" {
 			if len(tokens) < 2 {
 				print_failure(id, "no argument received for boardsize")
@@ -224,6 +242,8 @@ func StartGTP(genmove func(board *sgf.Board, colour sgf.Colour) string, name str
 				}
 			}
 
+			node.MakeMainLine()
+
 			print_success(id, "")
 			continue
 		}
@@ -269,6 +289,8 @@ func StartGTP(genmove func(board *sgf.Board, colour sgf.Colour) string, name str
 
 				s = GTP(s, root.RootBoardSize())
 			}
+
+			node.MakeMainLine()
 
 			print_success(id, s)
 			continue
