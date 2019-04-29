@@ -117,7 +117,7 @@ func StartGTP(genmove func(board *sgf.Board, colour sgf.Colour) string, name str
 
 			s := fmt.Sprintf("%f", komi)
 			s = strings.TrimRight(s, "0")		// Clear all trailing zeroes e.g. "7.5000" --> "7.5"
-			if strings.HasSuffix(".") {			// But fix if it now ends with "."
+			if strings.HasSuffix(s, ".") {		// But fix if it now ends with "."
 				s += "0"
 			}
 
