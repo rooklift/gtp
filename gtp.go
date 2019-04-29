@@ -149,7 +149,7 @@ func StartGTP(genmove func(board *sgf.Board, colour sgf.Colour) string, name str
 		// --------------------------------------------------------------------------------------------------
 
 		if tokens[0] == "showboard" {
-			print_success(id, "\n" + node.Board().String())
+			print_success(id, "Board:\n" + node.Board().String())
 			continue
 		}
 
