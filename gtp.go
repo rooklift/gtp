@@ -115,7 +115,10 @@ func StartGTP(genmove func(board *sgf.Board, colour sgf.Colour) string, name str
 				continue
 			}
 
-			root.SetValue("KM", fmt.Sprintf("%f", komi))
+			s := fmt.Sprintf("%f", komi)
+			s = strings.TrimRight(s, "0")		// Clear all trailing zeroes e.g. "7.5000" --> "7.5"
+
+			root.SetValue("KM", s)
 
 			print_success(id, "")
 			continue
