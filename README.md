@@ -1,7 +1,9 @@
 # gtp
-Go Text Protocol helper library for engines in Golang
+Go Text Protocol helper for engines in Golang.
 
-* The app registers its genmove() function with the library.
-* The genmove() function receives a Board and a Colour.
+Requires [fohristiwhirl/sgf](https://github.com/fohristiwhirl/sgf) library.
+
+* The app registers its genmove() function with the gtp..
+* The genmove() function receives an sgf.Board and an sgf.Colour.
 * The genmove() function returns an SGF-formatted move, e.g. "dd"
 * Or it can return "pass" or "resign"
