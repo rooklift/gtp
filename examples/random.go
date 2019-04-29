@@ -5,6 +5,7 @@ import (
 	"time"
 
 	gtp ".."
+	sgf "github.com/fohristiwhirl/sgf"
 )
 
 func init() {
@@ -15,12 +16,11 @@ func main() {
 	gtp.StartGTP(genmove, "Random", "1.0")
 }
 
-func genmove(colour int, board *gtp.Board) string {
-	all_possible := board.AllLegalMoves(colour)
+func genmove(board *sgf.Board, colour sgf.Colour) string {
+	all_possible := gtp.AllLegalMoves(board, colour)
 	if len(all_possible) == 0 {
 		return "resign"
 	}
 	i := rand.Intn(len(all_possible))
-	s := board.StringFromPoint(all_possible[i])
-	return s
+	return all_possible[i]
 }
