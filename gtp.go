@@ -241,7 +241,7 @@ func StartGTP(genmove func(board *sgf.Board, colour sgf.Colour) string, name str
 					continue
 				}
 
-				node, err = node.PlayMoveColour(p, colour)
+				node, err = node.PlayColour(p, colour)
 				if err != nil {
 					print_failure(id, "illegal move")
 					continue
@@ -285,7 +285,7 @@ func StartGTP(genmove func(board *sgf.Board, colour sgf.Colour) string, name str
 
 			} else {
 
-				node, err = node.PlayMoveColour(s, colour)
+				node, err = node.PlayColour(s, colour)
 				if err != nil {
 					print_failure(id, fmt.Sprintf("wanted to play illegal move: %q (%v)", s, err))
 					continue
