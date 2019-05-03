@@ -362,12 +362,12 @@ func AllLegalMoves(board *sgf.Board, colour sgf.Colour) []string {		// Returns s
 
 			for _, a := range sgf.AdjacentPoints(p, board.Size) {
 				if board.GetState(a) == colour.Opposite() {
-					if board.Liberties(a) == 1 {
+					if len(board.Liberties(a)) == 1 {
 						ret = append(ret, p)
 						continue Y_LOOP
 					}
 				} else if board.GetState(a) == colour {
-					if board.Liberties(a) >= 2 {
+					if len(board.Liberties(a)) >= 2 {
 						ret = append(ret, p)
 						continue Y_LOOP
 					}
