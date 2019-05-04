@@ -343,12 +343,12 @@ func AllLegalMoves(board *sgf.Board, colour sgf.Colour) []string {		// Returns s
 				continue Y_LOOP
 			}
 
-			if board.GetState(p) != sgf.EMPTY {
+			if board.Get(p) != sgf.EMPTY {
 				continue Y_LOOP
 			}
 
 			for _, a := range sgf.AdjacentPoints(p, board.Size) {
-				if board.GetState(a) == sgf.EMPTY {
+				if board.Get(a) == sgf.EMPTY {
 					ret = append(ret, p)				// Move is clearly legal since some of its neighbours are empty
 					continue Y_LOOP
 				}
@@ -361,12 +361,12 @@ func AllLegalMoves(board *sgf.Board, colour sgf.Colour) []string {		// Returns s
 			//		- Is a friendly group with 2 or more liberties.
 
 			for _, a := range sgf.AdjacentPoints(p, board.Size) {
-				if board.GetState(a) == colour.Opposite() {
+				if board.Get(a) == colour.Opposite() {
 					if len(board.Liberties(a)) == 1 {
 						ret = append(ret, p)
 						continue Y_LOOP
 					}
-				} else if board.GetState(a) == colour {
+				} else if board.Get(a) == colour {
 					if len(board.Liberties(a)) >= 2 {
 						ret = append(ret, p)
 						continue Y_LOOP
