@@ -5,7 +5,7 @@ import (
 	"time"
 
 	gtp ".."
-	sgf "github.com/fohristiwhirl/sgf"
+	sgf "github.com/rooklift/sgf"
 )
 
 func main() {
